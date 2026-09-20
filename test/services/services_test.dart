@@ -60,8 +60,9 @@ void main() {
       expect(service.currentUser, isNotNull);
 
       final states = <bool>[];
-      final sub =
-          service.authStateChanges().listen((u) => states.add(u != null));
+      final sub = service.authStateChanges().listen(
+        (u) => states.add(u != null),
+      );
       await service.signOut();
       await Future<void>.delayed(Duration.zero);
       await sub.cancel();

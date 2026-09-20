@@ -41,18 +41,18 @@ class AppUser {
   }
 
   Map<String, dynamic> toMap() => {
-        'uid': uid,
-        'name': name,
-        'email': email,
-        'role': role.name,
-        'createdAt': Timestamp.fromDate(createdAt),
-      };
+    'uid': uid,
+    'name': name,
+    'email': email,
+    'role': role.name,
+    'createdAt': Timestamp.fromDate(createdAt),
+  };
 
   AppUser copyWith({String? name}) => AppUser(
-        uid: uid,
-        name: name ?? this.name,
-        email: email,
-        role: role,
-        createdAt: createdAt,
-      );
+    uid: uid,
+    name: name ?? this.name,
+    email: email,
+    role: role,
+    createdAt: createdAt,
+  );
 }

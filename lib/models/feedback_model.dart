@@ -54,18 +54,18 @@ class FeedbackModel {
   }
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'itemId': itemId,
-        'itemTitle': itemTitle,
-        'itemType': itemType.name,
-        'userId': userId,
-        'userName': userName,
-        'rating': rating,
-        'review': review,
-        'suggestion': suggestion,
-        'createdAt': Timestamp.fromDate(createdAt),
-        'updatedAt': Timestamp.fromDate(updatedAt),
-      };
+    'id': id,
+    'itemId': itemId,
+    'itemTitle': itemTitle,
+    'itemType': itemType.name,
+    'userId': userId,
+    'userName': userName,
+    'rating': rating,
+    'review': review,
+    'suggestion': suggestion,
+    'createdAt': Timestamp.fromDate(createdAt),
+    'updatedAt': Timestamp.fromDate(updatedAt),
+  };
 
   FeedbackModel copyWith({
     int? rating,

@@ -8,13 +8,15 @@ typedef JsonMap = Map<String, dynamic>;
 /// references. Query logic belongs in the repositories, not here.
 class FirestoreService {
   FirestoreService({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _db;
 
-  CollectionReference<JsonMap> get users => _db.collection(FirestorePaths.users);
+  CollectionReference<JsonMap> get users =>
+      _db.collection(FirestorePaths.users);
 
-  CollectionReference<JsonMap> get items => _db.collection(FirestorePaths.items);
+  CollectionReference<JsonMap> get items =>
+      _db.collection(FirestorePaths.items);
 
   CollectionReference<JsonMap> get feedback =>
       _db.collection(FirestorePaths.feedback);

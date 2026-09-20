@@ -28,8 +28,10 @@ void main() {
     });
 
     test('unknown or missing role falls back to user', () {
-      expect(AppUser.fromMap({'uid': 'u2', 'role': 'superuser'}).role,
-          UserRole.user);
+      expect(
+        AppUser.fromMap({'uid': 'u2', 'role': 'superuser'}).role,
+        UserRole.user,
+      );
       expect(AppUser.fromMap({'uid': 'u3'}).role, UserRole.user);
     });
 

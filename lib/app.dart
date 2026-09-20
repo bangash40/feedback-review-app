@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
-class FeedbackReviewApp extends StatelessWidget {
+class FeedbackReviewApp extends ConsumerWidget {
   const FeedbackReviewApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp.router(
       title: 'Feedback & Review App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const Scaffold(
-        body: Center(
-          child: Text(
-            'Feedback & Review App',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
-          ),
-        ),
-      ),
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

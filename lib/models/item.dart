@@ -11,10 +11,10 @@ enum ItemType {
 
   /// Human-readable label for the UI.
   String get label => switch (this) {
-        ItemType.task => 'Task',
-        ItemType.course => 'Course',
-        ItemType.service => 'Service',
-      };
+    ItemType.task => 'Task',
+    ItemType.course => 'Course',
+    ItemType.service => 'Service',
+  };
 }
 
 /// A feedback subject created by an admin: `items/{itemId}`.
@@ -62,17 +62,17 @@ class Item {
   }
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'title': title,
-        'description': description,
-        'type': type.name,
-        'isActive': isActive,
-        'createdBy': createdBy,
-        'createdAt': Timestamp.fromDate(createdAt),
-        'ratingCount': ratingCount,
-        'ratingSum': ratingSum,
-        'averageRating': averageRating,
-      };
+    'id': id,
+    'title': title,
+    'description': description,
+    'type': type.name,
+    'isActive': isActive,
+    'createdBy': createdBy,
+    'createdAt': Timestamp.fromDate(createdAt),
+    'ratingCount': ratingCount,
+    'ratingSum': ratingSum,
+    'averageRating': averageRating,
+  };
 
   Item copyWith({
     String? title,

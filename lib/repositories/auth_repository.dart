@@ -38,7 +38,7 @@ class AuthRepository {
     await _createProfile(
       uid: credential.user!.uid,
       name: name.trim(),
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
     );
   }
 
@@ -72,7 +72,7 @@ class AuthRepository {
   Future<void> _ensureProfile(User user) async {
     final doc = await _firestore.users.doc(user.uid).get();
     if (doc.exists) return;
-    final email = user.email ?? '';
+    final email = (user.email ?? '').toLowerCase();
     await _createProfile(
       uid: user.uid,
       name: user.displayName ?? email.split('@').first,

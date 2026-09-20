@@ -35,6 +35,35 @@ void main() {
       expect(AppUser.fromMap({'uid': 'u3'}).role, UserRole.user);
     });
 
+    test('admin and super admin both count as admins; only one is super', () {
+      AppUser userWith(UserRole role) => AppUser(
+        uid: 'u',
+        name: 'N',
+        email: 'e',
+        role: role,
+        createdAt: created,
+      );
+
+      expect(userWith(UserRole.user).isAdmin, isFalse);
+      expect(userWith(UserRole.admin).isAdmin, isTrue);
+      expect(userWith(UserRole.superAdmin).isAdmin, isTrue);
+      expect(userWith(UserRole.admin).isSuperAdmin, isFalse);
+      expect(userWith(UserRole.superAdmin).isSuperAdmin, isTrue);
+    });
+
+    test('superAdmin round-trips using its console spelling', () {
+      final user = AppUser(
+        uid: 'u',
+        name: 'N',
+        email: 'e',
+        role: UserRole.superAdmin,
+        createdAt: created,
+      );
+
+      expect(user.toMap()['role'], 'superAdmin');
+      expect(AppUser.fromMap(user.toMap()).role, UserRole.superAdmin);
+    });
+
     test('toMap writes dates as Firestore Timestamps', () {
       final map = AppUser(
         uid: 'u1',

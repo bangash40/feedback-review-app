@@ -11,6 +11,17 @@ class Validators {
     return null;
   }
 
+  static const maxTitleLength = 80;
+
+  static String? itemTitle(String? value) {
+    final title = value?.trim() ?? '';
+    if (title.isEmpty) return 'Enter a title';
+    if (title.length > maxTitleLength) {
+      return 'Title must be $maxTitleLength characters or fewer';
+    }
+    return null;
+  }
+
   static String? email(String? value) {
     final email = value?.trim() ?? '';
     if (email.isEmpty) return 'Enter your email';

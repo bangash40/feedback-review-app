@@ -13,39 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mock_exceptions/mock_exceptions.dart';
 
-Widget buildApp(MockFirebaseAuth auth, FakeFirebaseFirestore db) {
-  return ProviderScope(
-    // No retries: a failing stream should surface, not leave timers pending.
-    retry: (_, _) => null,
-    overrides: [
-      authServiceProvider.overrideWithValue(AuthService(auth: auth)),
-      firestoreServiceProvider.overrideWithValue(
-        FirestoreService(firestore: db),
-      ),
-    ],
-    child: const FeedbackReviewApp(),
-  );
-}
-
-Future<void> seedProfile(
-  FakeFirebaseFirestore db, {
-  required String uid,
-  required String name,
-  required UserRole role,
-}) {
-  return db
-      .collection('users')
-      .doc(uid)
-      .set(
-        AppUser(
-          uid: uid,
-          name: name,
-          email: '$uid@example.com',
-          role: role,
-          createdAt: DateTime(2026),
-        ).toMap(),
-      );
-}
+import '../helpers/test_app.dart';
 
 /// A mock auth whose email sign-in always fails with [code].
 MockFirebaseAuth authFailingSignIn(String code) {

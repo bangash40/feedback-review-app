@@ -38,6 +38,20 @@ void main() {
     expect(profile.role, UserRole.user);
   });
 
+  test('signUp stores the email in lowercase so it can be searched', () async {
+    await repository.signUp(
+      name: 'Farhan',
+      email: '  Farhan@Example.COM ',
+      password: 'secret1',
+    );
+
+    final doc = await db
+        .collection('users')
+        .doc(repository.currentUser!.uid)
+        .get();
+    expect(doc.data()!['email'], 'farhan@example.com');
+  });
+
   test('signIn recreates a missing profile', () async {
     await repository.signUp(
       name: 'Farhan',

@@ -1,13 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Role stored on the user profile. Admins are promoted out-of-band
-/// (Firebase console); the client can only ever create `user` profiles.
+/// Role stored on the user profile.
+///
+/// - [user] reviews items.
+/// - [admin] manages items and reads all feedback.
+/// - [superAdmin] is an admin who can also change other users' roles. It is
+///   only ever set by hand in the Firebase console; the app cannot grant it.
+///
+/// The stored string is the enum name, so the console value for a super admin
+/// is exactly `superAdmin`.
 enum UserRole {
   user,
-  admin;
+  admin,
+  superAdmin;
 
   static UserRole fromName(String? name) =>
       UserRole.values.firstWhere((r) => r.name == name, orElse: () => user);
+
+  /// Human-readable label for the UI.
+  String get label => switch (this) {
+    UserRole.user => 'User',
+    UserRole.admin => 'Admin',
+    UserRole.superAdmin => 'Super admin',
+  };
 }
 
 /// A user profile document: `users/{uid}`.
@@ -26,7 +41,10 @@ class AppUser {
   final UserRole role;
   final DateTime createdAt;
 
-  bool get isAdmin => role == UserRole.admin;
+  /// True for admins and the super admin: both get the admin screens.
+  bool get isAdmin => role == UserRole.admin || role == UserRole.superAdmin;
+
+  bool get isSuperAdmin => role == UserRole.superAdmin;
 
   factory AppUser.fromMap(Map<String, dynamic> map) {
     return AppUser(
@@ -48,11 +66,11 @@ class AppUser {
     'createdAt': Timestamp.fromDate(createdAt),
   };
 
-  AppUser copyWith({String? name}) => AppUser(
+  AppUser copyWith({String? name, UserRole? role}) => AppUser(
     uid: uid,
     name: name ?? this.name,
     email: email,
-    role: role,
+    role: role ?? this.role,
     createdAt: createdAt,
   );
 }

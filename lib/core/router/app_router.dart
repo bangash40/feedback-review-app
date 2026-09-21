@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/admin/admin_dashboard_screen.dart';
 import '../../features/admin/manage_users_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
+import '../../features/feedback/feedback_form_screen.dart';
+import '../../features/feedback/my_feedback_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/auth/splash_screen.dart';
@@ -54,6 +56,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.itemDetailPattern,
         builder: (context, state) =>
             ItemDetailScreen(itemId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: AppRoutes.feedbackFormPattern,
+        builder: (context, state) =>
+            FeedbackFormScreen(itemId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: AppRoutes.myFeedback,
+        builder: (context, state) => const MyFeedbackScreen(),
       ),
       GoRoute(
         path: AppRoutes.admin,

@@ -13,6 +13,11 @@ class AppRoutes {
   static const itemDetailPattern = '/item/:id';
   static String itemDetail(String id) => '/item/$id';
 
+  static const feedbackFormPattern = '/item/:id/feedback';
+  static String feedbackForm(String itemId) => '/item/$itemId/feedback';
+
+  static const myFeedback = '/my-feedback';
+
   static const adminUsers = '/admin/users';
 
   static const adminItems = '/admin/items';

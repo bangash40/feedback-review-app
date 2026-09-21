@@ -24,6 +24,11 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('Home'),
         actions: [
           IconButton(
+            tooltip: 'My feedback',
+            icon: const Icon(Icons.rate_review_outlined),
+            onPressed: () => context.push(AppRoutes.myFeedback),
+          ),
+          IconButton(
             tooltip: 'Log out',
             icon: const Icon(Icons.logout),
             onPressed: () =>

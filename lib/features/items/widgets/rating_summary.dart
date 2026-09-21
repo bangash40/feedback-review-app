@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Read-only star display with the average and response count.
+import '../../../core/widgets/star_display.dart';
+
+/// Star display with the average and response count, e.g. "4.5 (2 ratings)".
 class RatingSummary extends StatelessWidget {
   const RatingSummary({
     super.key,
@@ -17,25 +19,21 @@ class RatingSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasRatings = count > 0;
+    final noun = count == 1 ? 'rating' : 'ratings';
     final label = hasRatings
-        ? '${average.toStringAsFixed(1)} ($count ${count == 1 ? 'rating' : 'ratings'})'
+        ? '${average.toStringAsFixed(1)} ($count $noun)'
         : 'No ratings yet';
 
     return Semantics(
       label: hasRatings
           ? 'Average rating ${average.toStringAsFixed(1)} out of 5 from $count '
-                '${count == 1 ? 'rating' : 'ratings'}'
+                '$noun'
           : 'No ratings yet',
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (var i = 1; i <= 5; i++)
-            Icon(
-              _iconFor(i),
-              size: starSize,
-              color: hasRatings ? Colors.amber.shade700 : theme.disabledColor,
-            ),
+          StarDisplay(value: average, size: starSize, muted: !hasRatings),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
@@ -49,14 +47,5 @@ class RatingSummary extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  /// Full star, half star (from .25 to .75) or outline for star number [i].
-  IconData _iconFor(int i) {
-    if (!(count > 0)) return Icons.star_border;
-    final remainder = average - (i - 1);
-    if (remainder >= 0.75) return Icons.star;
-    if (remainder >= 0.25) return Icons.star_half;
-    return Icons.star_border;
   }
 }

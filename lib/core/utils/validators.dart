@@ -11,6 +11,22 @@ class Validators {
     return null;
   }
 
+  static const maxFeedbackTextLength = 1000;
+
+  static String? rating(int? value) {
+    if (value == null || value < 1 || value > 5) {
+      return 'Please select a rating';
+    }
+    return null;
+  }
+
+  static String? feedbackText(String? value) {
+    if ((value?.trim().length ?? 0) > maxFeedbackTextLength) {
+      return 'Keep this under $maxFeedbackTextLength characters';
+    }
+    return null;
+  }
+
   static const maxTitleLength = 80;
 
   static String? itemTitle(String? value) {

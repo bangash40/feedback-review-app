@@ -4,6 +4,7 @@ import 'package:feedback_review_app/core/router/app_router.dart';
 import 'package:feedback_review_app/models/app_user.dart';
 import 'package:feedback_review_app/models/item.dart';
 import 'package:feedback_review_app/providers/firebase_providers.dart';
+import 'package:feedback_review_app/repositories/feedback_repository.dart';
 import 'package:feedback_review_app/services/auth_service.dart';
 import 'package:feedback_review_app/services/firestore_service.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
@@ -87,6 +88,28 @@ Future<void> seedItem(
           ratingSum: ratingSum,
           averageRating: ratingCount == 0 ? 0 : ratingSum / ratingCount,
         ).toMap(),
+      );
+}
+
+/// Leaves a review the same way the app does, so the item's rating totals
+/// stay consistent with the feedback documents.
+Future<void> seedFeedback(
+  FakeFirebaseFirestore db, {
+  required String itemId,
+  required String uid,
+  String name = 'Sam',
+  int rating = 4,
+  String review = '',
+  String suggestion = '',
+}) {
+  return FeedbackRepository(firestoreService: FirestoreService(firestore: db))
+      .submit(
+        itemId: itemId,
+        userId: uid,
+        userName: name,
+        rating: rating,
+        review: review,
+        suggestion: suggestion,
       );
 }
 

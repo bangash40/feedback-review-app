@@ -40,6 +40,39 @@ class FeedbackRepository {
         });
   }
 
+  /// How many feedback entries the admin dashboard loads.
+  ///
+  /// The dashboard filters, sorts and summarizes on the device, which needs no
+  /// composite indexes and makes every filter instant. That is comfortable for
+  /// a few hundred to a few thousand entries; beyond that the filters should
+  /// move to server-side queries.
+  static const dashboardLimit = 500;
+
+  /// The newest [limit] feedback entries across all users (admin only).
+  Stream<List<FeedbackModel>> watchAllFeedback({int limit = dashboardLimit}) {
+    return _firestore.feedback
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => FeedbackModel.fromMap({...doc.data(), 'id': doc.id}),
+              )
+              .toList(),
+        );
+  }
+
+  /// One feedback entry (admin only); emits null if it does not exist.
+  Stream<FeedbackModel?> watchFeedback(String id) {
+    return _firestore.feedback.doc(id).snapshots().map((snapshot) {
+      final data = snapshot.data();
+      return data == null
+          ? null
+          : FeedbackModel.fromMap({...data, 'id': snapshot.id});
+    });
+  }
+
   /// Creates or updates [userId]'s review of [itemId] and adjusts the item's
   /// aggregates, atomically, so the average is always right.
   Future<void> submit({

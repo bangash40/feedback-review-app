@@ -150,7 +150,7 @@ void main() {
       await tester.pumpWidget(buildApp(signedInAs('a1'), db));
       await tester.pumpAndSettle();
       expect(find.text('Admin dashboard'), findsOneWidget);
-      await tester.tap(find.text('Manage items'));
+      await tester.tap(find.byTooltip('Manage items'));
       await tester.pumpAndSettle();
     }
 
@@ -273,7 +273,7 @@ void main() {
       // Reactivate "Hidden Service" from the admin list.
       await tester.pumpWidget(buildApp(signedInAs('a1'), db));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Manage items'));
+      await tester.tap(find.byTooltip('Manage items'));
       await tester.pumpAndSettle();
       await tester.tap(switchFor('Hidden Service'));
       await tester.pumpAndSettle();

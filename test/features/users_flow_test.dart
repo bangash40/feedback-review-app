@@ -27,11 +27,15 @@ Future<UserRole> roleOf(FakeFirebaseFirestore db, String uid) async {
 /// Opens Manage users as the super admin.
 Future<void> openManageUsers(
   WidgetTester tester,
-  FakeFirebaseFirestore db,
-) async {
+  FakeFirebaseFirestore db, {
+  bool tall = true,
+}) async {
+  // Rows are lazily built, so make the screen tall enough to show them all.
+  // (The paging test wants a short screen, so it has to scroll.)
+  if (tall) useTallScreen(tester, height: 2000);
   await tester.pumpWidget(buildApp(signedInAs('boss'), db));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Manage users'));
+  await tester.tap(find.byTooltip('Manage users'));
   await tester.pumpAndSettle();
 }
 
@@ -56,7 +60,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Welcome, Boss (super admin)'), findsOneWidget);
-      expect(find.text('Manage users'), findsOneWidget);
+      expect(find.byTooltip('Manage users'), findsOneWidget);
     });
 
     testWidgets('a regular admin has no button and is bounced back', (
@@ -65,7 +69,7 @@ void main() {
       await tester.pumpWidget(buildApp(signedInAs('adm'), await world()));
       await tester.pumpAndSettle();
       expect(find.text('Welcome, Adam (admin)'), findsOneWidget);
-      expect(find.text('Manage users'), findsNothing);
+      expect(find.byTooltip('Manage users'), findsNothing);
 
       goTo(tester, '/admin/users');
       await tester.pumpAndSettle();
@@ -232,7 +236,7 @@ void main() {
           email: 'z$i@x.com',
         );
       }
-      await openManageUsers(tester, db);
+      await openManageUsers(tester, db, tall: false);
 
       // 5 seeded + 30 extra = 35 users; the first page holds 20.
       await tester.scrollUntilVisible(

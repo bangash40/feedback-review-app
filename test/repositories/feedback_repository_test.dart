@@ -260,4 +260,71 @@ void main() {
       expect(emissions, containsAllInOrder([0, 1]));
     });
   });
+
+  group('watchAllFeedback', () {
+    Future<void> at(String id, int minute) => seedFeedbackDoc(
+      db,
+      id: id,
+      itemId: 'i1',
+      userId: id,
+      createdAt: DateTime(2026, 1, 1, 10, minute),
+    );
+
+    test('returns all users feedback, newest first', () async {
+      await at('first', 1);
+      await at('third', 3);
+      await at('second', 2);
+
+      final all = await repository.watchAllFeedback().first;
+
+      expect(all.map((f) => f.id), ['third', 'second', 'first']);
+    });
+
+    test(
+      'keeps only the newest entries when there are more than the limit',
+      () async {
+        for (var minute = 1; minute <= 5; minute++) {
+          await at('f$minute', minute);
+        }
+
+        final limited = await repository.watchAllFeedback(limit: 3).first;
+
+        expect(limited.map((f) => f.id), ['f5', 'f4', 'f3']);
+      },
+    );
+
+    test('updates live as feedback arrives', () async {
+      final sizes = <int>[];
+      final sub = repository.watchAllFeedback().listen(
+        (list) => sizes.add(list.length),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      await submit('u1', 5);
+      await Future<void>.delayed(Duration.zero);
+      await submit('u2', 3);
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+
+      expect(sizes, containsAllInOrder([0, 1, 2]));
+    });
+
+    test('an empty collection gives an empty list', () async {
+      expect(await repository.watchAllFeedback().first, isEmpty);
+    });
+  });
+
+  group('watchFeedback', () {
+    test('emits one entry by id, or null when it is missing', () async {
+      await submit('u1', 4, review: 'Good');
+
+      // The in-memory fake emits an empty first event for a document written
+      // by a transaction; wait for the real one.
+      final found = await repository
+          .watchFeedback('i1_u1')
+          .firstWhere((entry) => entry != null);
+      expect(found?.review, 'Good');
+      expect(await repository.watchFeedback('i1_nobody').first, isNull);
+    });
+  });
 }

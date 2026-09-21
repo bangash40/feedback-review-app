@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/admin/admin_dashboard_screen.dart';
+import '../../features/admin/feedback_detail_screen.dart';
 import '../../features/admin/manage_users_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
 import '../../features/feedback/feedback_form_screen.dart';
@@ -69,6 +70,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.admin,
         builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminFeedbackPattern,
+        builder: (context, state) =>
+            FeedbackDetailScreen(feedbackId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: AppRoutes.adminUsers,

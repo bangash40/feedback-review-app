@@ -2,6 +2,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:feedback_review_app/app.dart';
 import 'package:feedback_review_app/core/router/app_router.dart';
 import 'package:feedback_review_app/models/app_user.dart';
+import 'package:feedback_review_app/models/feedback_model.dart';
 import 'package:feedback_review_app/models/item.dart';
 import 'package:feedback_review_app/providers/firebase_providers.dart';
 import 'package:feedback_review_app/repositories/feedback_repository.dart';
@@ -117,4 +118,64 @@ Future<void> seedFeedback(
 void goTo(WidgetTester tester, String location) {
   final context = tester.element(find.byType(MaterialApp));
   ProviderScope.containerOf(context).read(routerProvider).go(location);
+}
+
+/// Writes a feedback document directly with a fixed [createdAt], for tests
+/// that depend on ordering. Unlike [seedFeedback] it does not touch the
+/// item's rating totals.
+Future<void> seedFeedbackDoc(
+  FakeFirebaseFirestore db, {
+  required String id,
+  required String itemId,
+  required DateTime createdAt,
+  String itemTitle = 'Item',
+  ItemType itemType = ItemType.task,
+  String userId = 'u',
+  String userName = 'User',
+  int rating = 4,
+  String review = '',
+  String suggestion = '',
+}) {
+  return db
+      .collection('feedback')
+      .doc(id)
+      .set(
+        FeedbackModel(
+          id: id,
+          itemId: itemId,
+          itemTitle: itemTitle,
+          itemType: itemType,
+          userId: userId,
+          userName: userName,
+          rating: rating,
+          review: review,
+          suggestion: suggestion,
+          createdAt: createdAt,
+          updatedAt: createdAt,
+        ).toMap(),
+      );
+}
+
+/// Makes the test screen tall enough that a long scrolling page is fully laid
+/// out, so tests can look at every row without scrolling.
+void useTallScreen(WidgetTester tester, {double height = 4000}) {
+  tester.view.physicalSize = Size(800, height);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
+/// A narrow phone-sized screen (360 dp wide), where layouts are tightest.
+void usePhoneScreen(WidgetTester tester, {double height = 4000}) {
+  tester.view.physicalSize = Size(360, height);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
+/// Simulates the user's system font size setting (1.0 is the default; phones
+/// commonly go up to about 1.3 and accessibility settings up to 2.0).
+void useTextScale(WidgetTester tester, double scale) {
+  tester.platformDispatcher.textScaleFactorTestValue = scale;
+  addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 }

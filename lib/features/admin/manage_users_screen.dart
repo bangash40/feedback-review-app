@@ -237,12 +237,16 @@ class _UserTile extends StatelessWidget {
     final locked = isMe || user.isSuperAdmin;
 
     return ListTile(
+      isThreeLine: true,
       leading: CircleAvatar(child: Text(initial)),
       title: Text(isMe ? '${user.name} (you)' : user.name),
-      subtitle: Text(user.email),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+      // The role badge sits under the email rather than beside the menu, so a
+      // large system font cannot make the trailing area overflow.
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(user.email),
+          const SizedBox(height: 4),
           Chip(
             label: Text(user.role.label),
             visualDensity: VisualDensity.compact,
@@ -250,8 +254,11 @@ class _UserTile extends StatelessWidget {
                 ? theme.colorScheme.primaryContainer
                 : null,
           ),
-          if (!locked)
-            PopupMenuButton<UserRole>(
+        ],
+      ),
+      trailing: locked
+          ? null
+          : PopupMenuButton<UserRole>(
               tooltip: 'Change role for ${user.name}',
               onSelected: (role) => onChangeRole(user, role),
               itemBuilder: (context) => [
@@ -267,8 +274,6 @@ class _UserTile extends StatelessWidget {
                   ),
               ],
             ),
-        ],
-      ),
     );
   }
 }

@@ -65,6 +65,17 @@ class AppException implements Exception {
         return 'Service unavailable. Check your connection and try again.';
       case 'not-found':
         return 'The requested data could not be found.';
+      case 'unauthenticated':
+        return 'Please log in again.';
+      // A transaction that lost a race with another writer; retrying works.
+      case 'aborted':
+        return 'That was busy. Please try again.';
+      case 'deadline-exceeded':
+        return 'That took too long. Check your connection and try again.';
+      case 'resource-exhausted':
+        return 'Too many requests. Please wait a moment and try again.';
+      case 'failed-precondition':
+        return "That isn't possible right now. Please try again.";
       default:
         return 'Something went wrong. Please try again.';
     }

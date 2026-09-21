@@ -78,6 +78,25 @@ void main() {
     expect(await db.collection('feedback').get().then((s) => s.size), 0);
   });
 
+  test('submit waits for the profile instead of guessing a name', () async {
+    // Signed in, but there is no profile document to take a name from.
+    final container = containerWith(signedInAs('nobody'), db);
+    container.listen(currentUserProvider, (_, _) {}, fireImmediately: true);
+    await settle();
+
+    final ok = await container
+        .read(feedbackControllerProvider.notifier)
+        .submit(itemId: 'i1', rating: 5);
+
+    expect(ok, isFalse);
+    expect(
+      (container.read(feedbackControllerProvider).error as AppException)
+          .message,
+      contains('profile is still loading'),
+    );
+    expect(await db.collection('feedback').get().then((s) => s.size), 0);
+  });
+
   test('a repository failure becomes a friendly error', () async {
     final container = containerWith(signedInAs('u1'), db);
     container.listen(currentUserProvider, (_, _) {}, fireImmediately: true);
@@ -99,6 +118,7 @@ void main() {
     await seedItem(db, id: 'i2', title: 'Other');
     final container = containerWith(signedInAs('u1'), db);
     container.listen(myFeedbackProvider, (_, _) {}, fireImmediately: true);
+    container.listen(currentUserProvider, (_, _) {}, fireImmediately: true);
     await settle();
     final controller = container.read(feedbackControllerProvider.notifier);
     await controller.submit(itemId: 'i1', rating: 5);

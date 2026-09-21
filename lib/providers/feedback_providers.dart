@@ -49,11 +49,18 @@ class FeedbackController extends AsyncNotifier<void> with AsyncActionRunner {
     return runAction(() async {
       final uid = ref.read(signedInUidProvider);
       if (uid == null) throw const AppException('Please log in again.');
+      // The security rules require the stored name to match the user's real
+      // profile, so wait for the profile rather than guess a name.
       final name = ref.read(currentUserProvider).value?.name;
+      if (name == null || name.isEmpty) {
+        throw const AppException(
+          'Your profile is still loading. Please try again in a moment.',
+        );
+      }
       await _repository.submit(
         itemId: itemId,
         userId: uid,
-        userName: (name == null || name.isEmpty) ? 'User' : name,
+        userName: name,
         rating: rating,
         review: review,
         suggestion: suggestion,

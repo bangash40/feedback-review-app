@@ -1,0 +1,269 @@
+rules_version = '2';
+
+// Security rules for the Feedback & Review app.
+//
+// Roles live on users/{uid}.role:
+//   user        reviews items
+//   admin       manages items and reads all feedback
+//   superAdmin  an admin who can also change other users' roles; only ever set
+//               by hand in the Firebase console, never by the app
+//
+// These rules are the real security boundary; the app's screens only mirror
+// them. Everything not matched below is denied.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function itemPath(itemId) {
+      return /databases/$(database)/documents/items/$(itemId);
+    }
+
+    function feedbackPath(feedbackId) {
+      return /databases/$(database)/documents/feedback/$(feedbackId);
+    }
+
+    // The caller must have a profile document to hold a role at all.
+    function hasProfile() {
+      return signedIn() && exists(userPath(request.auth.uid));
+    }
+
+    function roleOfCaller() {
+      return get(userPath(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return hasProfile() && roleOfCaller() in ['admin', 'superAdmin'];
+    }
+
+    function isSuperAdmin() {
+      return hasProfile() && roleOfCaller() == 'superAdmin';
+    }
+
+    // ------------------------------------------------------------------
+    // users/{userId}
+    // ------------------------------------------------------------------
+
+    function validName(name) {
+      return name is string && name.size() >= 1 && name.size() <= 100;
+    }
+
+    match /users/{userId} {
+      // You can read your own profile; only the super admin can read others.
+      allow get: if signedIn() && (request.auth.uid == userId || isSuperAdmin());
+
+      // Listing and searching users is a super admin feature.
+      allow list: if isSuperAdmin();
+
+      // Sign-up creates your own profile, and it is always a plain user.
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'name', 'email', 'role', 'createdAt'])
+        && request.resource.data.keys().hasAll(
+             ['uid', 'name', 'email', 'role', 'createdAt'])
+        && request.resource.data.uid == userId
+        && validName(request.resource.data.name)
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 254
+        && request.resource.data.role == 'user'
+        && request.resource.data.createdAt is timestamp;
+
+      allow update: if signedIn() && (
+        // You may change only your own display name.
+        (
+          request.auth.uid == userId
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['name'])
+          && validName(request.resource.data.name)
+        )
+        ||
+        // The super admin may promote or demote anyone else between user and
+        // admin, and change nothing else. Never themselves, never another
+        // super admin, and never grant super admin.
+        (
+          request.auth.uid != userId
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['role'])
+          && request.resource.data.role in ['user', 'admin']
+          && resource.data.role != 'superAdmin'
+          && isSuperAdmin()
+        )
+      );
+
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // items/{itemId}
+    // ------------------------------------------------------------------
+
+    function validItemFields(data) {
+      return data.title is string
+        && data.title.size() >= 1 && data.title.size() <= 80
+        && data.description is string && data.description.size() <= 2000
+        && data.type in ['task', 'course', 'service']
+        && data.isActive is bool;
+    }
+
+    // The rating totals may only change together with the caller's own
+    // feedback document in the SAME write (transaction or batch), and by
+    // exactly what that feedback change implies. This is what stops anyone
+    // from simply writing a different average onto an item.
+    function totalsMatchFeedbackChange(itemId) {
+      let feedback = feedbackPath(itemId + '_' + request.auth.uid);
+      let existedBefore = exists(feedback);
+      let existsAfterWrite = existsAfter(feedback);
+      let ratingBefore = existedBefore ? get(feedback).data.rating : 0;
+      let ratingAfter = existsAfterWrite ? getAfter(feedback).data.rating : 0;
+      let countChange = (existsAfterWrite ? 1 : 0) - (existedBefore ? 1 : 0);
+      let count = request.resource.data.ratingCount;
+      let sum = request.resource.data.ratingSum;
+      return count == resource.data.ratingCount + countChange
+        && sum == resource.data.ratingSum + ratingAfter - ratingBefore
+        && count >= 0
+        // With no ratings the average is 0. Otherwise average * count must
+        // equal sum (multiplying avoids integer division).
+        && (count == 0
+              ? request.resource.data.averageRating == 0
+              : math.abs(request.resource.data.averageRating * count - sum)
+                  < 0.001);
+    }
+
+    match /items/{itemId} {
+      allow read: if signedIn();
+
+      // Admins create items, which start with no ratings.
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(
+             ['id', 'title', 'description', 'type', 'isActive', 'createdBy',
+              'createdAt', 'ratingCount', 'ratingSum', 'averageRating'])
+        && request.resource.data.keys().hasAll(
+             ['id', 'title', 'description', 'type', 'isActive', 'createdBy',
+              'createdAt', 'ratingCount', 'ratingSum', 'averageRating'])
+        && request.resource.data.id == itemId
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt is timestamp
+        && validItemFields(request.resource.data)
+        && request.resource.data.ratingCount == 0
+        && request.resource.data.ratingSum == 0
+        && request.resource.data.averageRating == 0;
+
+      allow update: if (
+        // Rating totals: only alongside a matching feedback change.
+        (
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['ratingCount', 'ratingSum', 'averageRating'])
+          && signedIn()
+          && totalsMatchFeedbackChange(itemId)
+        )
+        ||
+        // Admins edit the descriptive fields, never the totals.
+        (
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['title', 'description', 'type', 'isActive'])
+          && validItemFields(request.resource.data)
+          && isAdmin()
+        )
+      );
+
+      // Items are deactivated, never deleted.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // feedback/{feedbackId}     id is always "{itemId}_{userId}"
+    // ------------------------------------------------------------------
+
+    function validFeedbackFields(data) {
+      return data.rating is int && data.rating >= 1 && data.rating <= 5
+        && data.review is string && data.review.size() <= 1000
+        && data.suggestion is string && data.suggestion.size() <= 1000;
+    }
+
+    // Denormalized display fields must match the real item and the caller's
+    // real name, so nobody can post feedback under someone else's name or
+    // mislabel which item it is about.
+    function displayFieldsAreTruthful(data) {
+      let item = get(itemPath(data.itemId)).data;
+      return data.itemTitle == item.title
+        && data.itemType == item.type
+        && data.userName == get(userPath(request.auth.uid)).data.name;
+    }
+
+    // The item's totals must move by exactly this feedback change, in the same
+    // write.
+    function itemTotalsMoveBy(itemId, countChange, sumChange) {
+      let item = itemPath(itemId);
+      let before = get(item).data;
+      let after = getAfter(item).data;
+      return after.ratingCount == before.ratingCount + countChange
+        && after.ratingSum == before.ratingSum + sumChange;
+    }
+
+    match /feedback/{feedbackId} {
+      // Reading a review that does not exist yet must succeed (with a null
+      // resource): the app checks for an existing review before saving.
+      allow get: if signedIn() && (
+        resource == null
+        || resource.data.userId == request.auth.uid
+        || isAdmin()
+      );
+
+      // You can list your own feedback; admins can list everything.
+      allow list: if signedIn() && (
+        resource.data.userId == request.auth.uid
+        || isAdmin()
+      );
+
+      allow create: if signedIn()
+        && feedbackId == request.resource.data.itemId + '_' + request.auth.uid
+        && request.resource.data.keys().hasOnly(
+             ['id', 'itemId', 'itemTitle', 'itemType', 'userId', 'userName',
+              'rating', 'review', 'suggestion', 'createdAt', 'updatedAt'])
+        && request.resource.data.keys().hasAll(
+             ['id', 'itemId', 'itemTitle', 'itemType', 'userId', 'userName',
+              'rating', 'review', 'suggestion', 'createdAt', 'updatedAt'])
+        && request.resource.data.id == feedbackId
+        && request.resource.data.userId == request.auth.uid
+        && validFeedbackFields(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        // New feedback is only accepted for items that are still active.
+        && get(itemPath(request.resource.data.itemId)).data.isActive == true
+        && displayFieldsAreTruthful(request.resource.data)
+        && itemTotalsMoveBy(
+             request.resource.data.itemId, 1, request.resource.data.rating);
+
+      // Only the author edits, and only the review content. Editing an
+      // inactive item's review is allowed.
+      allow update: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['itemTitle', 'itemType', 'userName', 'rating', 'review',
+                       'suggestion', 'updatedAt'])
+        && validFeedbackFields(request.resource.data)
+        && request.resource.data.updatedAt == request.time
+        && displayFieldsAreTruthful(request.resource.data)
+        && itemTotalsMoveBy(
+             resource.data.itemId, 0,
+             request.resource.data.rating - resource.data.rating);
+
+      // Only the author deletes, and the item's totals must be reduced.
+      allow delete: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && itemTotalsMoveBy(
+             resource.data.itemId, -1, -resource.data.rating);
+    }
+  }
+}

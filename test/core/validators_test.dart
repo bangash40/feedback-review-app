@@ -20,11 +20,25 @@ void main() {
       expect(Validators.password('123456'), isNull);
     });
 
-    test('name is required', () {
+    test('name is required and limited to what the rules allow', () {
       expect(Validators.name(''), isNotNull);
       expect(Validators.name('   '), isNotNull);
       expect(Validators.name('Farhan'), isNull);
+      expect(Validators.name('x' * 100), isNull);
+      expect(Validators.name('x' * 101), isNotNull);
+      // Surrounding spaces are trimmed before saving, so they don't count.
+      expect(Validators.name('  ${'x' * 100}  '), isNull);
     });
+
+    test(
+      'item description is optional but limited to what the rules allow',
+      () {
+        expect(Validators.itemDescription(null), isNull);
+        expect(Validators.itemDescription(''), isNull);
+        expect(Validators.itemDescription('x' * 2000), isNull);
+        expect(Validators.itemDescription('x' * 2001), isNotNull);
+      },
+    );
 
     test('confirmPassword must match', () {
       expect(Validators.confirmPassword('', 'secret1'), isNotNull);
@@ -61,6 +75,19 @@ void main() {
             .suggestSignUp,
         isFalse,
       );
+    });
+
+    test('maps the other Firestore failures to friendly messages', () {
+      String msg(String code) => AppException.from(
+        FirebaseException(plugin: 'cloud_firestore', code: code),
+      ).message;
+
+      expect(msg('unauthenticated'), contains('log in'));
+      expect(msg('aborted'), contains('try again'));
+      expect(msg('deadline-exceeded'), contains('too long'));
+      expect(msg('resource-exhausted'), contains('Too many'));
+      expect(msg('failed-precondition'), contains('try again'));
+      expect(msg('some-new-code'), 'Something went wrong. Please try again.');
     });
 
     test('maps Firestore permission errors', () {

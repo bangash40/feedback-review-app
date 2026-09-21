@@ -137,6 +137,7 @@ class _ItemFormState extends ConsumerState<_ItemForm> {
                     textCapitalization: TextCapitalization.sentences,
                     minLines: 3,
                     maxLines: 6,
+                    validator: Validators.itemDescription,
                     decoration: const InputDecoration(
                       labelText: 'Description',
                       alignLabelWithHint: true,

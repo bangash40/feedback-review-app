@@ -53,3 +53,9 @@ app.*.map.json
 
 # Firebase config kept local
 android/app/google-services.json
+
+# Firestore rules tests
+firestore_tests/node_modules/
+firestore-debug.log
+firestore_tests/firestore-debug.log
+ui-debug.log

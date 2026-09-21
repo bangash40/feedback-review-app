@@ -6,8 +6,25 @@ class Validators {
 
   static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
+  /// Matches the limit in the Firestore security rules.
+  static const maxNameLength = 100;
+
   static String? name(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Enter your name';
+    final name = value?.trim() ?? '';
+    if (name.isEmpty) return 'Enter your name';
+    if (name.length > maxNameLength) {
+      return 'Name must be $maxNameLength characters or fewer';
+    }
+    return null;
+  }
+
+  /// Matches the limit in the Firestore security rules.
+  static const maxDescriptionLength = 2000;
+
+  static String? itemDescription(String? value) {
+    if ((value?.trim().length ?? 0) > maxDescriptionLength) {
+      return 'Description must be $maxDescriptionLength characters or fewer';
+    }
     return null;
   }
 

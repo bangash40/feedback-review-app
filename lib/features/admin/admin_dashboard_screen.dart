@@ -47,6 +47,11 @@ class AdminDashboardScreen extends ConsumerWidget {
                     onPressed: () => context.push(AppRoutes.adminUsers),
                   ),
                 IconButton(
+                  tooltip: 'Profile',
+                  icon: const Icon(Icons.person_outline),
+                  onPressed: () => context.push(AppRoutes.profile),
+                ),
+                IconButton(
                   tooltip: 'Log out',
                   icon: const Icon(Icons.logout),
                   onPressed: () =>

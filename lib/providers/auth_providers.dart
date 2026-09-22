@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/utils/app_exception.dart';
 import '../models/app_user.dart';
 import '../repositories/auth_repository.dart';
 import 'async_action_runner.dart';
@@ -69,3 +70,20 @@ class AuthController extends AsyncNotifier<void> with AsyncActionRunner {
 final authControllerProvider = AsyncNotifierProvider<AuthController, void>(
   AuthController.new,
 );
+
+/// Runs profile edits (currently just the display name).
+class ProfileController extends AsyncNotifier<void> with AsyncActionRunner {
+  @override
+  Future<void> build() async {}
+
+  Future<bool> updateName(String name) {
+    return runAction(() async {
+      final uid = ref.read(signedInUidProvider);
+      if (uid == null) throw const AppException('Please log in again.');
+      await ref.read(authRepositoryProvider).updateName(uid: uid, name: name);
+    });
+  }
+}
+
+final profileControllerProvider =
+    AsyncNotifierProvider<ProfileController, void>(ProfileController.new);

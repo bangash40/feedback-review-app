@@ -103,6 +103,22 @@ void main() {
     },
   );
 
+  test('updateName changes only the name field', () async {
+    await repository.signUp(
+      name: 'Farhan',
+      email: 'f@example.com',
+      password: 'secret1',
+    );
+    final uid = repository.currentUser!.uid;
+
+    await repository.updateName(uid: uid, name: '  Farhan Ali  ');
+
+    final doc = await db.collection('users').doc(uid).get();
+    expect(doc.data()!['name'], 'Farhan Ali');
+    expect(doc.data()!['role'], 'user');
+    expect(doc.data()!['email'], 'f@example.com');
+  });
+
   test('watchUser emits the profile and null when missing', () async {
     expect(await repository.watchUser('nobody').first, isNull);
 

@@ -52,6 +52,12 @@ class AuthRepository {
   Future<void> sendPasswordReset(String email) =>
       _auth.sendPasswordReset(email.trim());
 
+  /// Changes the display name on the profile document. The security rules
+  /// allow a user to change only their own name, nothing else.
+  Future<void> updateName({required String uid, required String name}) {
+    return _firestore.users.doc(uid).update({'name': name.trim()});
+  }
+
   Future<void> _createProfile({
     required String uid,
     required String name,

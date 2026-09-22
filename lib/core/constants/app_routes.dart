@@ -18,6 +18,8 @@ class AppRoutes {
 
   static const myFeedback = '/my-feedback';
 
+  static const profile = '/profile';
+
   static const adminFeedbackPattern = '/admin/feedback/:id';
   static String adminFeedback(String id) => '/admin/feedback/$id';
 
